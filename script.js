@@ -1,14 +1,14 @@
 (() => {
   let style = document.createElement('style')
-  style.innerHTML = '.search_result:hover{background: red;}'
+  style.innerHTML = '.search_result:hover{background: #ff0033;}'
   let container = document.createElement('div');
   container.style.cssText = 'box-sizing: border-box;width: 90%;margin-top: 80px;margin-bottom:-30px;margin-left:15px;position: relative;';
-
+  container.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24" focusable="false" aria-hidden="true" style="pointer-events: none; display: inherit; height: 40px; position: absolute;top: 0;left:10px;color:rgba(255,255,255,.5);"><path clip-rule="evenodd" d="M16.296 16.996a8 8 0 11.707-.708l3.909 3.91-.707.707-3.909-3.909zM18 11a7 7 0 00-14 0 7 7 0 1014 0z" fill-rule="evenodd"></path></svg>`
   let search = document.createElement("input");
   search.placeholder = "Loading songs...";
   search.disabled = true;
   search.className = "playlist_search"
-  search.style.cssText = "box-sizing: border-box;width: 100%;background:#505050;border:0;outline:none;color:#eee;font-size:16px;padding:10px;border-radius: 10px;";
+  search.style.cssText = "box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;box-sizing: border-box;width: 100%;background:rgba(255,255,255,.15);border: 1px rgba(255,255,255,0.15) solid;outline:none;color:rgba(255,255,255,.5);font-size:16px;padding:10px;padding-left: 40px;border-radius: 8px;";
   container.appendChild(search);
 
   let resultsContainer = document.createElement('div');
@@ -69,16 +69,22 @@
   }
 
   getPlaylistItems(playlist, api_key)
-    .then(items => {
-      const videos = items.map(item => ({
-        title: item.snippet.title,
-        channel: item.snippet.videoOwnerChannelTitle,
-        id: item.snippet.resourceId.videoId
-      })).filter(x => x.title && x.channel);
-      window.videos = videos;
-      console.log(videos);
-      search.placeholder = "Search in this playlist...";
-      search.disabled = false;
-    })
-    .catch(err => console.error('Error fetching playlist:', err));
+  .then(items => {
+    window.videos = items.reduce((acc, item) => {
+      const title = item.snippet?.title;
+      let channel = item.snippet?.videoOwnerChannelTitle;
+      const id = item.snippet?.resourceId?.videoId;
+      if (title && channel && id) {
+        if (channel.includes('- Topic')) {
+          channel = channel.replace('- Topic', '');
+        }
+        acc.push({ title, channel, id });
+      }
+      return acc;
+    }, []);
+    console.log(window.videos);
+    search.placeholder = "Search in this playlist...";
+    search.disabled = false;
+  })
+  .catch(err => console.error('Error fetching playlist:', err));
 })();
