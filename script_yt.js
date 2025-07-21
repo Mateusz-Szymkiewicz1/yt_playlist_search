@@ -90,14 +90,35 @@ function code(){
   .catch(err => console.error('Error fetching playlist:', err));
 }
 (function() {
+  // Get the last visited page from sessionStorage
+  const lastPage = sessionStorage.getItem('last_page');
+
+  // If coming to /playlist from another page, refresh
+  if (location.pathname === '/playlist' && lastPage !== '/playlist') {
+    sessionStorage.setItem('last_page', '/playlist');
+    location.reload();
+    return; // Stop further script execution until reload
+  }
+
+  // Update last_page on every navigation
+  sessionStorage.setItem('last_page', location.pathname);
+
+  // ...existing code...
   let lastUrl = location.href;
-  if (location.pathname.includes('/playlist')) {
+  if (location.pathname == '/playlist') {
     waitForPlaylistAndInject();
   }
   setInterval(() => {
     if (location.href !== lastUrl) {
       lastUrl = location.href;
-      if (location.pathname.includes('/playlist')) {
+      // Always update last_page on navigation
+      sessionStorage.setItem('last_page', location.pathname);
+      if (location.pathname == '/playlist' && sessionStorage.getItem('last_page') !== '/playlist') {
+        sessionStorage.setItem('last_page', '/playlist');
+        location.reload();
+        return;
+      }
+      if (location.pathname == '/playlist') {
         waitForPlaylistAndInject();
       }
     }
