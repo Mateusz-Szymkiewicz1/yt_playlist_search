@@ -1,10 +1,9 @@
-(() => {
-  if(document.querySelector(".playlist_search")) return
-  console.log("working")
+function code(){
+  console.log("working2")
   let style = document.createElement('style')
   style.innerHTML = '.search_result:hover{background: #ff0033;}'
   let container = document.createElement('div');
-  container.style.cssText = 'box-sizing: border-box;width: 90%;margin-top: 80px;margin-bottom:-30px;margin-left:15px;position: relative;';
+  container.style.cssText = 'box-sizing: border-box;width: 90%;margin-bottom:10px;margin-left:35px;position: relative;';
   container.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24" focusable="false" aria-hidden="true" style="pointer-events: none; display: inherit; height: 40px; position: absolute;top: 0;left:10px;color:rgba(255,255,255,.5);"><path clip-rule="evenodd" d="M16.296 16.996a8 8 0 11.707-.708l3.909 3.91-.707.707-3.909-3.909zM18 11a7 7 0 00-14 0 7 7 0 1014 0z" fill-rule="evenodd"></path></svg>`
   let search = document.createElement("input");
   search.placeholder = "Loading songs...";
@@ -16,9 +15,9 @@
   let resultsContainer = document.createElement('div');
   resultsContainer.style.cssText = "box-sizing: border-box;width: 100%; background: #404040; color: #eee; margin-top: 5px; max-height: 300px; overflow-y: auto; border-radius: 5px; font-size: 14px;";
   container.appendChild(resultsContainer);
-
-  document.querySelector('#secondary').prepend(container);
-  document.querySelector('#secondary').prepend(style);
+  
+  document.querySelector('#primary').prepend(container);
+  document.querySelector('#primary').append(style);
   document.addEventListener('click', () => {
     if(event.target.className == "search_result" || event.target.className == "playlist_search") return
     resultsContainer.innerHTML = ''
@@ -89,4 +88,30 @@
     search.disabled = false;
   })
   .catch(err => console.error('Error fetching playlist:', err));
+}
+(function() {
+  let lastUrl = location.href;
+  if (location.pathname.includes('/playlist')) {
+    waitForPlaylistAndInject();
+  }
+  setInterval(() => {
+    if (location.href !== lastUrl) {
+      lastUrl = location.href;
+      if (location.pathname.includes('/playlist')) {
+        waitForPlaylistAndInject();
+      }
+    }
+  }, 500);
+
+  function waitForPlaylistAndInject() {
+    const checkInterval = setInterval(() => {
+      const primary = document.querySelector('#primary');
+      const playlistSection = document.querySelector('ytd-playlist-video-list-renderer');
+
+      if (primary && playlistSection && !primary.querySelector('.playlist_search')) {
+        code();
+        clearInterval(checkInterval);
+      }
+    }, 300);
+  }
 })();
