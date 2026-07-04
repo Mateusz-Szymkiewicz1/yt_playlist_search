@@ -1,27 +1,22 @@
-chrome.webNavigation.onHistoryStateUpdated.addListener(function (details) {
-  if (details.url.includes('music.youtube.com/playlist?list=')) {
-    chrome.scripting.executeScript({
-      target: { tabId: details.tabId },
-      files: ["script.js"]
-    });
-  }else if (details.url.includes('www.youtube.com/playlist?list=')) {
-    chrome.scripting.executeScript({
-      target: { tabId: details.tabId },
-      files: ["script_yt.js"]
-    });
-  }
-}, { url: [{ hostContains: 'youtube.com' }] });
+function injectForPlaylist(details) {
+  const url = new URL(details.url);
+  const isMusicPlaylist = url.hostname === 'music.youtube.com' && url.pathname === '/playlist';
+  const isYouTubePlaylist = /(^|\.)youtube\.com$/i.test(url.hostname) && url.pathname === '/playlist';
 
-chrome.webNavigation.onCompleted.addListener(function (details) {
-  if (details.url.includes('music.youtube.com/playlist?list=')) {
-    chrome.scripting.executeScript({
-      target: { tabId: details.tabId },
-      files: ["script.js"]
-    });
-  }else if (details.url.includes('www.youtube.com/playlist?list=')) {
-    chrome.scripting.executeScript({
-      target: { tabId: details.tabId },
-      files: ["script_yt.js"]
-    });
-  }
-}, { url: [{ hostContains: 'youtube.com' }] });
+  if (!isMusicPlaylist && !isYouTubePlaylist) return;
+
+  const scriptFile = isMusicPlaylist ? 'script.js' : 'script_yt.js';
+
+  chrome.scripting.executeScript({
+    target: { tabId: details.tabId },
+    files: [scriptFile]
+  });
+}
+
+chrome.webNavigation.onHistoryStateUpdated.addListener(injectForPlaylist, {
+  url: [{ hostContains: 'youtube.com' }]
+});
+
+chrome.webNavigation.onCompleted.addListener(injectForPlaylist, {
+  url: [{ hostContains: 'youtube.com' }]
+});
