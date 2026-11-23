@@ -3,8 +3,11 @@
   "version": "1.0",
   "manifest_version": 3,
   "description": "adds a search input, to search inside a given playlist",
-  "permissions": ["scripting", "tabs", "webNavigation"],
-  "host_permissions": ["https://*.youtube.com/*"],
+  "permissions": ["scripting", "tabs", "webNavigation", "storage"],
+  "host_permissions": [
+    "https://*.youtube.com/*",
+    "https://www.googleapis.com/*"
+  ],
   "background": {
     "service_worker": "background.js"
   },

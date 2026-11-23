@@ -40,7 +40,8 @@
           let div = document.createElement('a');
           div.href="https://music.youtube.com/watch?v="+item.id
           div.textContent = `${item.channel} — ${item.title}`;
-          div.target = "blank"
+          div.target = "_blank";
+          div.rel = "noopener noreferrer";
           div.className = "search_result"
           div.style.cssText = "cursor:pointer;display: block;color:#eee;text-decoration:none;padding: 10px; border-bottom: 1px solid #555;";
           resultsContainer.appendChild(div);
@@ -49,28 +50,31 @@
     }
   });
 
-  let playlist = window.location.search.split("=")[1];
-  let api_key = "AIzaSyD-2VsB6HLBe9m2ZSXmQbGR1b2gzFNijLQ";
+  const playlist = new URLSearchParams(window.location.search).get("list");
 
-  async function getPlaylistItems(playlistId, apiKey) {
-    let nextPageToken = '';
-    const allItems = [];
-
-    do {
-      const response = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${apiKey}&pageToken=${nextPageToken}`);
-      const data = await response.json();
-
-      if (data.items) {
-        allItems.push(...data.items);
-      }
-
-      nextPageToken = data.nextPageToken || '';
-    } while (nextPageToken);
-
-    return allItems;
+  if (!playlist) {
+    search.placeholder = "Playlist not found";
+    return;
   }
 
-  getPlaylistItems(playlist, api_key)
+  async function getPlaylistItems(playlistId) {
+    return new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage(
+        { type: "fetchPlaylistItems", playlistId },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else if (!response?.ok) {
+            reject(new Error(response?.error || "Failed to fetch playlist"));
+          } else {
+            resolve(response.items);
+          }
+        }
+      );
+    });
+  }
+
+  getPlaylistItems(playlist)
   .then(items => {
     window.videos = items.reduce((acc, item) => {
       const title = item.snippet?.title;

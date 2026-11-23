@@ -48,6 +48,7 @@ function code() {
           div.href = 'https://www.youtube.com/watch?v=' + item.id;
           div.textContent = `${item.channel} — ${item.title}`;
           div.target = '_blank';
+          div.rel = 'noopener noreferrer';
           div.className = 'search_result';
           div.style.cssText = 'cursor:pointer;display: block;color:#eee;text-decoration:none;padding: 10px; border-bottom: 1px solid #555;';
           resultsContainer.appendChild(div);
@@ -57,24 +58,22 @@ function code() {
   });
 
   const playlistId = new URLSearchParams(window.location.search).get('list');
-  const apiKey = 'AIzaSyD-2VsB6HLBe9m2ZSXmQbGR1b2gzFNijLQ';
 
-  async function getPlaylistItems(id, apiKeyValue) {
-    let nextPageToken = '';
-    const allItems = [];
-
-    do {
-      const response = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${id}&key=${apiKeyValue}&pageToken=${nextPageToken}`);
-      const data = await response.json();
-
-      if (data.items) {
-        allItems.push(...data.items);
-      }
-
-      nextPageToken = data.nextPageToken || '';
-    } while (nextPageToken);
-
-    return allItems;
+  async function getPlaylistItems(id) {
+    return new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage(
+        { type: 'fetchPlaylistItems', playlistId: id },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else if (!response?.ok) {
+            reject(new Error(response?.error || 'Failed to fetch playlist'));
+          } else {
+            resolve(response.items);
+          }
+        }
+      );
+    });
   }
 
   if (!playlistId) {
@@ -82,7 +81,7 @@ function code() {
     return;
   }
 
-  getPlaylistItems(playlistId, apiKey)
+  getPlaylistItems(playlistId)
     .then((items) => {
       window.videos = items.reduce((acc, item) => {
         const title = item.snippet?.title;
